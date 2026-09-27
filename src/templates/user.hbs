@@ -1,0 +1,29 @@
+<article class="user-card" id="{{id}}">
+  <div class="user-card__content">
+    <h3 class="user-card__name">
+      {{name}}
+    </h3>
+    <p class="user-card__email">
+      {{email}}
+    </p>
+    <p class="user-card__age">
+      Age:
+      {{age}}
+    </p>
+  </div>
+  <div class="user-card__actions">
+    <button
+      class="button button--danger delete-user"
+      type="button"
+      data-id="{{id}}"
+    >
+      Delete
+    </button>
+    <button
+      class="button edit-user"
+      type="button"
+    >
+      Edit 
+    </button>
+  </div>
+</article>
