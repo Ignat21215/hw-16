@@ -6,8 +6,17 @@ let userList = document.querySelector('#usersList');
 let userForm = document.querySelector('#userForm');
 let closeModalBtn = document.querySelector('[data-close-modal]');
 let page = 1;
+let totalPages;
 let prevBtn = document.querySelector('.prev-btn');
 let nextBtn = document.querySelector('.next-btn');
+
+fetch(API_URL + '/users')
+    .then(response => {
+        response.json()
+    })
+    .then(data => {
+        totalPages = Math.ceil(data.length / 5)
+    });
 
 function renderUsers(users) {
     userList.innerHTML = '';
@@ -149,37 +158,22 @@ userList.addEventListener('click', (event) => {
     }
 })
 
-function pagination() {
-    fetch(`${API_URL}/users?limit=5&page=${page}`)
-        .then(response => {
-            return response.json()
-        })
-        .then(data => renderUsers(data))
-}
-
-function getPages(){
-    fetch(API_URL + '/users')
-        .then(response => {
-            return response.json()
-        })
-        .then(data => {return data.length})
-}
-
-if (page === 1) {
-    prevBtn.style.display = 'none';
-} else if (page === getPages()) {
-    nextBtn.style.display = 'none'
-} else {
-    prevBtn.style.display = 'inline-block';
-    nextBtn.style.display = 'inline-block';
-}
-
 prevBtn.addEventListener('click', () => {
-    page--;
-    pagination()
+    if (page == 1) {
+        getAllUsers()
+    } else {
+        page--;
+        getAllUsers()
+    }
 })
 
 nextBtn.addEventListener('click', () => {
-    page++;
-    pagination()
+    if (page == totalPages) {
+        getAllUsers()
+    } else {
+        page++;
+        getAllUsers()
+    }
+    console.log(totalPages, page)
+    console.log(typeof (totalPages))
 })
