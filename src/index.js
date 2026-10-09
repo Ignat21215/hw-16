@@ -10,13 +10,17 @@ let totalPages;
 let prevBtn = document.querySelector('.prev-btn');
 let nextBtn = document.querySelector('.next-btn');
 
-fetch(API_URL + '/users')
-    .then(response => {
-        response.json()
-    })
-    .then(data => {
+async function getPagesCount() {
+    try {
+        let response = await fetch(API_URL + '/users');
+        let data = await response.json();
         totalPages = Math.ceil(data.length / 5)
-    });
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+getPagesCount();
 
 function renderUsers(users) {
     userList.innerHTML = '';
@@ -26,39 +30,40 @@ function renderUsers(users) {
     })
 }
 
-function getAllUsers() {
-    fetch(`${API_URL}/users?limit=5&page=${page}`)
-        .then(response => {
-            if (response.ok) {
-                return response.json()
-            } else {
-                throw new Error('response is not ok, status: ' + response.status);
-            }
-        })
-        .then(users => renderUsers(users))
+async function getAllUsers() {
+    try {
+        let response = await fetch(`${API_URL}/users?limit=5&page=${page}`);
+
+        if (!response.ok) {
+            throw new Error('response is not ok, status: ' + response.status);
+        }
+
+        renderUsers(await response.json())
+
+    } catch (error) {
+        console.log('response is not ok, status: ' + error)
+    }
 }
 
 getAllUsers();
 
-function createUser(data) {
-    fetch(API_URL + '/users', {
-        method: 'POST',
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data)
-    })
-        .then(response => {
-            if (response.ok) {
-                return response.json()
-            } else {
-                throw new Error('response is not ok, status: ' + response.status);
-            }
+async function createUser(data) {
+    try {
+        let response = await fetch(API_URL + '/users', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data)
         })
-        .then(() => {
-            userForm.reset();
-            getAllUsers();
-        })
+        if (!response.ok) {
+            throw new Error('response is not ok, status: ' + response.status);
+        }
+        userForm.reset();
+        getAllUsers();
+    } catch (error) {
+        console.log('error:', error)
+    }
 }
 
 userForm.addEventListener('submit', submitUserForm)
@@ -69,27 +74,46 @@ function submitUserForm() {
     createUser(formData);
 }
 
-function deleteUser(id) {
-    fetch(API_URL + '/users/' + id, {
-        method: 'DELETE'
-    })
-        .then(response => {
-            if (response.ok) {
-                return response.json()
-            } else {
-                throw new Error('response is not ok, status: ' + response.status);
-            }
-        })
-        .then(() => {
-            getAllUsers();
-        })
+async function deleteUser(id) {
+    try {
+        let response = await fetch(API_URL + '/users/' + id, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error('response is not ok, status: ' + response.status);
+        }
+        getAllUsers();
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 function makeObj(obj, key, value) {
     obj[key] = value;
 }
 
-function openModal(user) {
+async function putData(edited) {
+    try {
+        let response = await fetch(API_URL + '/users/' + edited.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: edited.name,
+                email: edited.email,
+                age: edited.age,
+            })
+        })
+        if (!response.ok) {
+            throw new Error('response is not ok, status: ' + response.status);
+        }
+        closeModal();
+        getAllUsers();
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function openModal(user) {
     let modalForm = document.querySelector('.modal > form');
     let backdrop = document.querySelector('.backdrop');
     backdrop.classList.remove('is-hidden');
@@ -113,26 +137,7 @@ function openModal(user) {
             makeObj(edited, x.getAttribute('name'), x.value)
         })
         if (!inputs.forEach(x => x.placeholder.trim() == '')) {
-            fetch(API_URL + '/users/' + edited.id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: edited.name,
-                    email: edited.email,
-                    age: edited.age,
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json()
-                    } else {
-                        throw new Error('response is not ok, status: ' + response.status);
-                    }
-                })
-                .then(() => {
-                    closeModal();
-                    getAllUsers();
-                })
+            putData(edited)
         }
     })
 }
@@ -174,6 +179,4 @@ nextBtn.addEventListener('click', () => {
         page++;
         getAllUsers()
     }
-    console.log(totalPages, page)
-    console.log(typeof (totalPages))
 })
